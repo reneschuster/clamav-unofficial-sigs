@@ -129,6 +129,14 @@ function xshok_array_count () {
 	fi
 }
 
+#function to handle list of database files
+function clamav_files () {
+	echo "$clam_dbs/$db" >> "$current_tmp"
+	if [ "$keep_db_backup" = "yes" ] ; then
+		echo "$clam_dbs/$db-bak" >> "$current_tmp"
+	fi
+}
+
 #function to check for a new version
 function check_new_version () {
 	latest_version=`curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/clamav-unofficial-sigs.sh 2> /dev/null | grep  "script""_version=" | cut -d\" -f2`
@@ -182,8 +190,8 @@ function help_and_usage () {
 }
 
 #Script Info
-script_version="5.0.6"
-script_version_date="04 April 2016"
+script_version="5.0.X"
+script_version_date="XX April 2016"
 minimum_required_config_version="56"
 
 #default config files
@@ -1045,12 +1053,7 @@ current_dbs="$work_dir_configs/current-dbs.txt"
 previous_dbs="$work_dir_configs/previous-dbs.txt"
 sort "$current_dbs" > "$previous_dbs" 2>/dev/null
 rm -f "$current_dbs"
-clamav_files () {
-	echo "$clam_dbs/$db" >> "$current_tmp"
-	if [ "$keep_db_backup" = "yes" ] ; then
-		echo "$clam_dbs/$db-bak" >> "$current_tmp"
-	fi
-}
+
 if [ -n "$sanesecurity_dbs" ] ; then
 	for db in $sanesecurity_dbs ; do
 		echo "$sanesecurity_dir/$db" >> "$current_tmp"
@@ -1298,6 +1301,19 @@ done
 		fi
 		fi
 	fi
+else
+	if [ -n "$sanesecurity_dbs" ] ; then
+		for db_file in $sanesecurity_dbs ; do
+			if [ -r "$sanesecurity_dir/$db_file" ] ; then
+				rm -f "$sanesecurity_dir/$db_file"*
+				do_clamd_reload=1
+			fi
+			if [ -r "$clam_dbs/$db_file" ] ; then
+				rm -f "$clam_dbs/$db_file"
+				do_clamd_reload=1
+			fi
+		done
+	fi
 fi
 
 ##############################################################################################################################################
@@ -1423,11 +1439,25 @@ if [ "$securiteinfo_enabled" == "yes" ] ; then
 		xshok_pretty_echo_and_log "$securiteinfo_update_hours hours have not yet elapsed since the last SecuriteInfo update check"
 		xshok_pretty_echo_and_log "No update check was performed at this time" "-"
 		xshok_pretty_echo_and_log "Next check will be performed in approximately $hours_left hour(s), $minutes_left minute(s)"
+fi
+fi
+fi
+fi
+else
+	if [ -n "$securiteinfo_dbs" ] ; then
+		for db_file in $securiteinfo_dbs ; do
+			if [ -r "$securiteinfo_dir/$db_file" ] ; then
+				rm -f "$securiteinfo_dir/$db_file"
+				do_clamd_reload=1
+			fi
+			if [ -r "$clam_dbs/$db_file" ] ; then
+				rm -f "$clam_dbs/$db_file"
+				do_clamd_reload=1
+			fi
+		done
 	fi
 fi
-fi
-fi
-fi
+
 
 ##############################################################################################################################################
 # Check for updated linuxmalwaredetect database files every set number of hours as defined in the "USER CONFIGURATION" section of this script 
@@ -1553,6 +1583,19 @@ else
 fi
 fi
 fi
+else
+	if [ -n "$linuxmalwaredetect_dbs" ] ; then
+		for db_file in $linuxmalwaredetect_dbs ; do
+			if [ -r "$linuxmalwaredetect_dir/$db_file" ] ; then
+				rm -f "$linuxmalwaredetect_dir/$db_file"
+				do_clamd_reload=1
+			fi
+			if [ -r "$clam_dbs/$db_file" ] ; then
+				rm -f "$clam_dbs/$db_file"
+				do_clamd_reload=1
+			fi
+		done
+	fi
 fi
 
 
@@ -1697,6 +1740,17 @@ if [ "$malwarepatrol_enabled" == "yes" ] ; then
 	fi
 fi
 fi
+else
+	if [ -n "$malwarepatrol_db" ] ; then
+		if [ -r "$malwarepatrol_dir/$malwarepatrol_db" ] ; then
+			rm -f "$malwarepatrol_dir/$malwarepatrol_db"
+			do_clamd_reload=1
+		fi
+		if [ -r "$clam_dbs/$malwarepatrol_db" ] ; then
+			rm -f "$clam_dbs/$malwarepatrol_db"
+			do_clamd_reload=1
+		fi
+	fi
 fi
 ## MEOW POSSIBLY MISSING OR EXTRA fi....
 
@@ -1829,6 +1883,22 @@ else
 fi
 fi
 fi
+else
+	if [ -n "$yararules_dbs" ] ; then
+		for db_file in $yararules_dbs ; do
+			if echo $db_file|grep -q "/"; then
+				db_file=`echo $db_file | cut -d"/" -f2`
+			fi
+			if [ -r "$yararules_dir/$db_file" ] ; then
+				rm -f "$yararules_dir/$db_file"
+				do_clamd_reload=1
+			fi
+			if [ -r "$clam_dbs/$db_file" ] ; then
+				rm -f "$clam_dbs/$db_file"
+				do_clamd_reload=1
+			fi
+		done
+	fi
 fi
 
 ###################################################
